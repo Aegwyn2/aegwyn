@@ -1,0 +1,127 @@
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package aegwyn.core.web.model;
+
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+
+/**
+ *
+ * @author sunwell
+ */
+@ApplicationScoped
+public class StandardUserSessionContainer implements UserSessionContainer
+{
+
+    @EJB
+    WebApplicationContext wac;
+    
+    private Map<String, UserSession> sessions = new HashMap<> ();
+    private String credURL;
+    private GetSessionExecutor gsExecutor;
+    private String credPath;
+    
+    @PostConstruct
+    public void init() {
+//        System.out.println ("CONTAINER POSt CONSTRUCT CALLED");
+//        System.out.println ("WAC: " + wac.toString ());
+//        System.out.println ("DATABASE: " + wac.getProperty ("database"));
+        credURL = wac.getProperty ("credURL");
+        credPath = wac.getProperty ("credPath");
+        if(credURL != null && credPath != null && credURL.length () > 0 && credPath.length () > 0) {
+            gsExecutor = new RemoteGetSessionExecutor ();
+        }
+        else {
+            gsExecutor = new LocalGetSessionExecutor ();
+        }
+    }
+    
+    @Override
+    public UserSession getSession(String _session, boolean _createNew)
+    {
+//        UserSession session = _session != null ? sessions.get (_session) : null;
+//        if(session == null && _createNew) {
+//            session = new UserSession ();
+//            sessions.put (session.getSessionId (), session);
+//        }
+//            return session;
+        
+        return gsExecutor.getSession (_session, _createNew);
+    }
+    
+    @Override
+    public UserSession newSession()
+    {
+        UserSession session = new UserSession ();
+        sessions.put (session.getSessionId (), session);
+        return session;
+    }
+    
+    private UserSession getLocalSession(String _session, boolean _createNew)
+    {
+        UserSession session = _session != null ? sessions.get (_session) : null;
+        if(session == null && _createNew) {
+            session = new UserSession ();
+            sessions.put (session.getSessionId (), session);
+        }
+            return session;
+    }
+    
+    private UserSession getRemoteSession(String _session, boolean _createNew) throws Exception
+    {
+        String result = sendRequest (_session);
+    }
+    
+    private interface GetSessionExecutor {
+        public UserSession getSession(String _session, boolean _createNew);
+    }
+    
+    private class LocalGetSessionExecutor implements GetSessionExecutor {
+        public UserSession getSession(String _session, boolean _createNew) {
+            return getLocalSession (_session, _createNew);
+        }
+    }
+    
+    private class RemoteGetSessionExecutor implements GetSessionExecutor {
+        public UserSession getSession(String _session, boolean _createNew) {
+            return getRemoteSession (_session, _createNew);
+        }
+    }
+    
+    private String sendRequest(String _data) throws Exception {
+        URL url = new URL(credURL + "/" + credPath);
+        HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+        httpCon.setDoOutput(true);
+        httpCon.setRequestMethod("GET");
+        OutputStreamWriter out = new OutputStreamWriter(
+            httpCon.getOutputStream());
+        out.write ("{\"sessionId\": '" + _data + "\'}");
+        out.flush ();
+        
+        if (httpCon.getResponseCode() != HttpURLConnection.HTTP_CREATED) {
+                throw new RuntimeException("Failed : HTTP error code : "
+                        + httpCon.getResponseCode());
+        }
+        
+        System.out.println(httpCon.getResponseCode());
+        System.out.println(httpCon.getResponseMessage());
+        out.close();
+    }
+}

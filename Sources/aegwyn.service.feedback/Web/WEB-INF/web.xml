@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	 version="3.1">
+     <persistence-context-ref>
+        <description>
+            Persistence context for schema 0
+        </description>
+        <persistence-context-ref-name>
+            persistence/LOCATION0
+        </persistence-context-ref-name>
+        <persistence-unit-name>FeedbackPU_schema_0</persistence-unit-name>
+        <persistence-context-type>Transaction</persistence-context-type>
+    </persistence-context-ref>
+    <persistence-context-ref>
+        <description>
+            Persistence context for schema 1
+        </description>
+        <persistence-context-ref-name>
+            persistence/LOCATION1
+        </persistence-context-ref-name>
+        <persistence-unit-name>FeedbackPU_schema_1</persistence-unit-name>
+        <persistence-context-type>Transaction</persistence-context-type>
+    </persistence-context-ref>
+    <persistence-context-ref>
+        <description>
+            Persistence context for schema 2
+        </description>
+        <persistence-context-ref-name>
+            persistence/LOCATION2
+        </persistence-context-ref-name>
+        <persistence-unit-name>FeedbackPU_schema_2</persistence-unit-name>
+        <persistence-context-type>Transaction</persistence-context-type>
+    </persistence-context-ref>
+    <session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+</web-app>
